@@ -70,20 +70,6 @@ class StudentResource extends Resource
                             ->placeholder('10 digit')
                             ->helperText('Nomor Induk Siswa Nasional (opsional)'),
                             
-                        Forms\Components\TextInput::make('birth_place')
-                            ->label('Tempat Lahir')
-                            ->required()
-                            ->maxLength(100)
-                            ->placeholder('Contoh: Madiun'),
-                            
-                        Forms\Components\DatePicker::make('birth_date')
-                            ->label('Tanggal Lahir')
-                            ->required()
-                            ->native(false)
-                            ->displayFormat('d/m/Y')
-                            ->maxDate(now()->subYears(5))
-                            ->placeholder('Pilih tanggal'),
-                            
                         Forms\Components\Select::make('gender')
                             ->label('Jenis Kelamin')
                             ->options([
@@ -106,7 +92,6 @@ class StudentResource extends Resource
                     ->schema([
                         Forms\Components\Textarea::make('address')
                             ->label('Alamat Lengkap')
-                            ->required()
                             ->rows(3)
                             ->columnSpanFull()
                             ->placeholder('Contoh: Jl. Sudirman No. 123, RT 02/RW 05, Kelurahan Madiun'),

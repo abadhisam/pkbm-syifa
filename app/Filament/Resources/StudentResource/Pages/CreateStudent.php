@@ -27,10 +27,10 @@ class CreateStudent extends CreateRecord
         return $data;
     }
 
-    public static function afterCreate(array $data, Model $record): void
+    protected function afterCreate(): void
     {
-        if (isset($data['enrollment_data'])) {
-            $record->enrollments()->create($data['enrollment_data']);
+        if (isset($this->data['enrollment_data'])) {
+            $this->record->enrollments()->create($this->data['enrollment_data']);
         }
     }
 }
