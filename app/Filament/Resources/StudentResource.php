@@ -31,12 +31,16 @@ class StudentResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with([
-                'activeEnrollment', 
-                'activeEnrollment.program', 
-                'activeEnrollment.studyGroup',
-                'activeEnrollment.academicYear'
-            ]);
+        ->select(['id', 'full_name', 'nik', 'nisn', 'gender', 'phone_number', 'created_at'])
+        ->with([
+            'activeEnrollment' => fn ($q) => $q
+                ->select(['id', 'student_id', 'academic_year_id', 'program_id', 'study_group_id', 'status'])
+                ->with([
+                    'program:id,name',
+                    'studyGroup:id,name',
+                    'academicYear:id,name,is_active',
+                ]),
+        ]);
     }
 
     public static function form(Form $form): Form
@@ -106,12 +110,17 @@ class StudentResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('academic_year_id')
                             ->label('Tahun Ajaran')
-                            ->options(fn () => AcademicYear::query()
-                                ->orderBy('is_active', 'desc')
-                                ->orderBy('name', 'desc')
-                                ->pluck('name', 'id')
-                                ->map(fn ($name, $id) => AcademicYear::find($id)->is_active ? "$name (Aktif)" : $name)
-                            )
+                            ->options(function () {
+                                return cache()->remember('ay_options', 600, function () {
+                                    return AcademicYear::query()
+                                        ->orderByDesc('is_active')
+                                        ->orderByDesc('name')
+                                        ->get(['id', 'name', 'is_active'])
+                                        ->mapWithKeys(fn ($ay) => [
+                                            $ay->id => $ay->is_active ? "{$ay->name} (Aktif)" : $ay->name,
+                                        ])->all();
+                                });
+                            })
                             ->default(fn () => AcademicYear::where('is_active', true)->value('id'))
                             ->required()
                             ->native(false)
