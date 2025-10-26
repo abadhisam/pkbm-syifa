@@ -15,7 +15,6 @@ return new class extends Migration
             $table->foreignId('program_id')->constrained('programs')->onDelete('restrict');
             $table->foreignId('study_group_id')->nullable()->constrained('study_groups')->nullOnDelete();
             
-            $table->string('origin_school', 150)->nullable();
             $table->year('graduation_year')->nullable();
             $table->enum('status', ['Aktif', 'Alumni', 'Tidak Selesai'])->default('Aktif');
 

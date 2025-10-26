@@ -41,6 +41,9 @@ class StudentResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $years = range(1990, 2030);
+        $graduationYearOptions = array_combine($years, $years);
+
         return $form
             ->schema([
                 Forms\Components\Section::make('Data Pribadi')
@@ -112,8 +115,7 @@ class StudentResource extends Resource
                             ->default(fn () => AcademicYear::where('is_active', true)->value('id'))
                             ->required()
                             ->native(false)
-                            ->searchable()
-                            ->dehydrated(true),
+                            ->searchable(),
                             
                         Forms\Components\Select::make('program_id')
                             ->label('Paket Program')
@@ -122,8 +124,7 @@ class StudentResource extends Resource
                             ->native(false)
                             ->searchable()
                             ->live()
-                            ->helperText('Pilih Paket A, B, atau C')
-                            ->dehydrated(true),
+                            ->helperText('Pilih Paket A, B, atau C'),
                             
                         Forms\Components\Select::make('study_group_id')
                             ->label('Kelompok Belajar')
@@ -131,8 +132,7 @@ class StudentResource extends Resource
                             ->nullable()
                             ->native(false)
                             ->searchable()
-                            ->helperText('Pilih kelompok belajar yang sesuai')
-                            ->dehydrated(true),
+                            ->helperText('Pilih kelompok belajar yang sesuai'),
                             
                         Forms\Components\Select::make('status')
                             ->label('Status')
@@ -143,26 +143,17 @@ class StudentResource extends Resource
                             ])
                             ->default('Aktif')
                             ->required()
-                            ->native(false)
-                            ->dehydrated(true),
+                            ->native(false),
                             
-                        Forms\Components\TextInput::make('origin_school')
-                            ->label('Sekolah Asal')
-                            ->nullable()
-                            ->maxLength(150)
-                            ->placeholder('Contoh: SD Negeri 1 Madiun')
-                            ->columnSpanFull(),
-                            
-                        Forms\Components\TextInput::make('graduation_year')
+                        Forms\Components\Select::make('graduation_year')
                             ->label('Tahun Lulus')
+                            ->options($graduationYearOptions)
+                            ->searchable()
                             ->nullable()
-                            ->numeric()
-                            ->minValue(1990)
-                            ->maxValue(now()->year)
-                            ->placeholder('Contoh: 2024')
-                            ->helperText('Tahun lulus dari sekolah asal'),
+                            ->native(false)
+                            ->helperText('Tahun lulus dari sekolah asal')
                     ])
-                    ->visibleOn('create')
+                    // ->visibleOn('create')
                     ->collapsible(),
             ]);
     }
