@@ -31,7 +31,7 @@ class StudentResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-        ->select(['id', 'full_name', 'nik', 'nisn', 'gender', 'phone_number', 'created_at'])
+        ->select(['id', 'full_name', 'nis', 'nisn', 'gender', 'phone_number', 'created_at'])
         ->with([
             'activeEnrollment' => fn ($q) => $q
                 ->select(['id', 'student_id', 'academic_year_id', 'program_id', 'study_group_id', 'status'])
@@ -58,16 +58,16 @@ class StudentResource extends Resource
                             ->required()
                             ->maxLength(150)
                             ->placeholder('Contoh: Ahmad Fauzi'),
-                            
-                        Forms\Components\TextInput::make('nik')
-                            ->label('NIK')
+
+                        Forms\Components\TextInput::make('nis')
+                            ->label('NIS')
                             ->unique(ignoreRecord: true)
                             ->nullable()
                             ->numeric()
                             ->length(16)
                             ->placeholder('16 digit')
                             ->helperText('Nomor Induk Kependudukan (opsional)'),
-                            
+
                         Forms\Components\TextInput::make('nisn')
                             ->label('NISN')
                             ->unique(ignoreRecord: true)
@@ -76,7 +76,7 @@ class StudentResource extends Resource
                             ->length(10)
                             ->placeholder('10 digit')
                             ->helperText('Nomor Induk Siswa Nasional (opsional)'),
-                            
+
                         Forms\Components\Select::make('gender')
                             ->label('Jenis Kelamin')
                             ->options([
@@ -85,16 +85,16 @@ class StudentResource extends Resource
                             ])
                             ->required()
                             ->native(false),
-                            
+
                         Forms\Components\TextInput::make('phone_number')
                             ->label('No. Telp/WA')
                             ->tel()
                             ->nullable()
                             ->maxLength(30)
                             ->placeholder('Contoh: 08123456789')
-                            ->helperText('Untuk keperluan komunikasi'), 
+                            ->helperText('Untuk keperluan komunikasi'),
                     ]),
-                
+
                 Forms\Components\Section::make('Alamat')
                     ->schema([
                         Forms\Components\Textarea::make('address')
@@ -125,7 +125,7 @@ class StudentResource extends Resource
                             ->required()
                             ->native(false)
                             ->searchable(),
-                            
+
                         Forms\Components\Select::make('program_id')
                             ->label('Paket Program')
                             ->options(fn () => Program::pluck('name', 'id'))
@@ -134,7 +134,7 @@ class StudentResource extends Resource
                             ->searchable()
                             ->live()
                             ->helperText('Pilih Paket A, B, atau C'),
-                            
+
                         Forms\Components\Select::make('study_group_id')
                             ->label('Kelompok Belajar')
                             ->options(fn () => StudyGroup::pluck('name', 'id'))
@@ -142,7 +142,7 @@ class StudentResource extends Resource
                             ->native(false)
                             ->searchable()
                             ->helperText('Pilih kelompok belajar yang sesuai'),
-                            
+
                         Forms\Components\Select::make('status')
                             ->label('Status')
                             ->options([
@@ -153,7 +153,7 @@ class StudentResource extends Resource
                             ->default('Aktif')
                             ->required()
                             ->native(false),
-                            
+
                         Forms\Components\Select::make('graduation_year')
                             ->label('Tahun Lulus')
                             ->options($graduationYearOptions)
@@ -170,6 +170,8 @@ class StudentResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultPaginationPageOption(10)
+            ->paginationPageOptions([10, 25, 50])
             ->columns([
                 Tables\Columns\TextColumn::make('full_name')
                     ->label('Nama Lengkap')
@@ -177,21 +179,21 @@ class StudentResource extends Resource
                     ->sortable()
                     ->copyable()
                     ->weight('medium'),
-                    
-                Tables\Columns\TextColumn::make('nik')
-                    ->label('NIK')
+
+                Tables\Columns\TextColumn::make('nis')
+                    ->label('NIS')
                     ->searchable()
                     ->toggleable()
                     ->placeholder('Belum ada')
                     ->copyable(),
-                    
+
                 Tables\Columns\TextColumn::make('nisn')
                     ->label('NISN')
                     ->searchable()
                     ->toggleable()
                     ->placeholder('Belum ada')
                     ->copyable(),
-                    
+
                 Tables\Columns\TextColumn::make('gender')
                     ->label('L/P')
                     ->badge()
@@ -205,27 +207,27 @@ class StudentResource extends Resource
                         'Perempuan' => 'P',
                         default => $state,
                     }),
-                    
+
                 Tables\Columns\TextColumn::make('phone_number')
                     ->label('No. Telp')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->copyable(),
-                    
+
                 Tables\Columns\TextColumn::make('activeEnrollment.program.name')
                     ->label('Paket')
                     ->sortable()
                     ->badge()
                     ->color('primary')
                     ->placeholder('Belum terdaftar'),
-                    
+
                 Tables\Columns\TextColumn::make('activeEnrollment.studyGroup.name')
                     ->label('Kelompok')
                     ->sortable()
                     ->badge()
                     ->color('info')
                     ->placeholder('-'),
-                    
+
                 Tables\Columns\TextColumn::make('activeEnrollment.status')
                     ->label('Status')
                     ->sortable()
@@ -237,7 +239,7 @@ class StudentResource extends Resource
                         default => 'gray',
                     })
                     ->placeholder('Belum terdaftar'),
-                    
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Terdaftar Sejak')
                     ->dateTime('d/m/Y H:i')
@@ -251,16 +253,16 @@ class StudentResource extends Resource
                     ->default(fn () => AcademicYear::where('is_active', true)->value('id'))
                     ->query(function (Builder $query, array $data): Builder {
                         $yearId = $data['value'] ?? AcademicYear::where('is_active', true)->value('id');
-                        
+
                         if ($yearId) {
-                            return $query->whereHas('enrollments', fn ($q) => 
+                            return $query->whereHas('enrollments', fn ($q) =>
                                 $q->where('academic_year_id', $yearId)
                             );
                         }
-                        
+
                         return $query;
                     }),
-                
+
                 Tables\Filters\SelectFilter::make('program')
                     ->label('Paket Program')
                     ->options(fn () => Program::pluck('name', 'id'))
@@ -268,8 +270,8 @@ class StudentResource extends Resource
                         if (empty($data['value'])) {
                             return $query;
                         }
-                        
-                        return $query->whereHas('enrollments', fn ($q) => 
+
+                        return $query->whereHas('enrollments', fn ($q) =>
                             $q->where('program_id', $data['value'])
                         );
                     }),
@@ -281,12 +283,12 @@ class StudentResource extends Resource
                         if (empty($data['value'])) {
                             return $query;
                         }
-                        
-                        return $query->whereHas('enrollments', fn ($q) => 
+
+                        return $query->whereHas('enrollments', fn ($q) =>
                             $q->where('study_group_id', $data['value'])
                         );
                     }),
-                    
+
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status Siswa')
                     ->options([
@@ -298,12 +300,12 @@ class StudentResource extends Resource
                         if (empty($data['value'])) {
                             return $query;
                         }
-                        
-                        return $query->whereHas('enrollments', fn ($q) => 
+
+                        return $query->whereHas('enrollments', fn ($q) =>
                             $q->where('status', $data['value'])
                         );
                     }),
-                    
+
                 Tables\Filters\SelectFilter::make('gender')
                     ->label('Jenis Kelamin')
                     ->options([

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->string('full_name', 150);
-            $table->string('nik', 16)->unique()->nullable();
+            $table->string('nis', 10)->unique()->nullable();
             $table->string('nisn', 10)->unique()->nullable();
             $table->enum('gender', ['Laki-laki', 'Perempuan']);
             $table->text('address')->nullable();

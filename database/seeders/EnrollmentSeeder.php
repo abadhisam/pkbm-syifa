@@ -11,151 +11,133 @@ class EnrollmentSeeder extends Seeder
     public function run()
     {
         $studentCount = DB::table('students')->count();
-        
-        if ($studentCount < 15) {
-            $this->command->error('❌ Error: Students table harus memiliki minimal 15 data!');
-            $this->command->error('Jalankan StudentSeeder terlebih dahulu: php artisan db:seed --class=StudentSeeder');
-            return;
+
+        if ($studentCount < 197) {
+            $this->command->warn('⚠️  Warning: Diharapkan 197 students, saat ini ada ' . $studentCount);
         }
 
         $academicYearId = DB::table('academic_years')->where('is_active', true)->value('id');
-        $programIds = DB::table('programs')->pluck('id')->toArray();
+        $programs = DB::table('programs')->get()->keyBy('name');
         $studyGroupIds = DB::table('study_groups')->pluck('id')->toArray();
-        
-        if (!$academicYearId || empty($programIds) || empty($studyGroupIds)) {
+
+        if (!$academicYearId || $programs->isEmpty() || empty($studyGroupIds)) {
             $this->command->error('❌ Error: Pastikan data AcademicYear, Program, dan StudyGroup sudah ada!');
             return;
         }
 
-        $studentIds = DB::table('students')->pluck('id')->toArray();
-        $now = Carbon::now();
-
-        $programStudyGroupMap = [
-            1 => array_slice($studyGroupIds, 0, 5),
-            2 => array_slice($studyGroupIds, 5, 5),
-            3 => array_slice($studyGroupIds, 10, 4),
-        ];
-        
-        $enrollments = [];
-        $fixedEnrollments = [
-            [
-                'student_id' => $studentIds[0],
-                'program_id' => 1,
-                'graduation_year' => 2024,
-                'status' => 'Aktif',
-            ],
-            [
-                'student_id' => $studentIds[1],
-                'program_id' => 1,
-                'graduation_year' => 2023,
-                'status' => 'Aktif',
-            ],
-            [
-                'student_id' => $studentIds[2],
-                'program_id' => 1,
-                'graduation_year' => 2024,
-                'status' => 'Aktif',
-            ],
-            
-            [
-                'student_id' => $studentIds[3],
-                'program_id' => 2,
-                'graduation_year' => 2024,
-                'status' => 'Aktif',
-            ],
-            [
-                'student_id' => $studentIds[4],
-                'program_id' => 2,
-                'graduation_year' => 2023,
-                'status' => 'Aktif',
-            ],
-            [
-                'student_id' => $studentIds[5],
-                'program_id' => 2,
-                'graduation_year' => 2024,
-                'status' => 'Aktif',
-            ],
-            [
-                'student_id' => $studentIds[6],
-                'program_id' => 2,
-                'graduation_year' => 2022,
-                'status' => 'Aktif',
-            ],
-            
-            [
-                'student_id' => $studentIds[7],
-                'program_id' => 3,
-                'graduation_year' => 2024,
-                'status' => 'Aktif',
-            ],
-            [
-                'student_id' => $studentIds[8],
-                'program_id' => 3,
-                'graduation_year' => 2023,
-                'status' => 'Aktif',
-            ],
-            [
-                'student_id' => $studentIds[9],
-                'program_id' => 3,
-                'graduation_year' => 2024,
-                'status' => 'Aktif',
-            ],
-        ];
-
-        foreach ($fixedEnrollments as $enrollment) {
-            $programId = $enrollment['program_id'];
-            $availableGroups = $programStudyGroupMap[$programId] ?? $studyGroupIds;
-            
-            $enrollments[] = array_merge($enrollment, [
-                'academic_year_id' => $academicYearId,
-                'study_group_id' => $availableGroups[array_rand($availableGroups)],
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-        }
-
-        if (count($studentIds) >= 15) {
-            $originSchools = [
-                1 => ['SD Negeri 3 Madiun', 'SD Al-Irsyad', 'MI Madiun', null],
-                2 => ['SMP Negeri 2 Madiun', 'SMP IT Madiun', 'MTs Swasta Madiun', null],
-                3 => ['SMA Negeri 2 Madiun', 'SMA Swasta Madiun', 'SMK Negeri 1 Madiun', null],
-            ];
-            
-            $statuses = ['Aktif', 'Alumni', 'Tidak Selesai'];
-            
-            for ($i = 10; $i < 15; $i++) {
-                $programId = rand(1, 3);
-                $availableGroups = $programStudyGroupMap[$programId] ?? $studyGroupIds;
-                $status = $statuses[array_rand($statuses)];
-                
-                $enrollments[] = [
-                    'student_id' => $studentIds[$i],
-                    'academic_year_id' => $academicYearId,
-                    'program_id' => $programId,
-                    'study_group_id' => $availableGroups[array_rand($availableGroups)],
-                    'graduation_year' => rand(0, 1) ? rand(2020, 2024) : null,
-                    'status' => $status,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
+        $requiredPrograms = ['Paket A', 'Paket B', 'Paket C IPA', 'Paket C IPS'];
+        foreach ($requiredPrograms as $programName) {
+            if (!$programs->has($programName)) {
+                $this->command->error("❌ Error: Program '{$programName}' tidak ditemukan!");
+                $this->command->error('Pastikan tabel programs memiliki: Paket A, Paket B, Paket C IPA, Paket C IPS');
+                return;
             }
         }
 
-         try {
-            DB::table('enrollments')->insert($enrollments);
+        $students = DB::table('students')->orderBy('id')->get();
+        $now = Carbon::now();
+
+        $programStudyGroupMap = [
+            $programs['Paket A']->id => [1, 2, 3, 4, 5],
+            $programs['Paket B']->id => [6, 7, 8, 9],
+            $programs['Paket C IPA']->id => [10, 11, 12],
+            $programs['Paket C IPS']->id => [13, 14, 15],
+        ];
+
+        $statuses = ['Aktif', 'Alumni', 'Tidak Selesai'];
+        $enrollments = [];
+
+        foreach ($students as $student) {
+            $programId = null;
+
+            if (strpos($student->nis, 'A-') === 0) {
+                $programId = $programs['Paket A']->id;
+            } elseif (strpos($student->nis, 'B-') === 0) {
+                $programId = $programs['Paket B']->id;
+            } elseif (strpos($student->nis, 'C-') === 0) {
+                $nisNumber = (int) str_replace('C-', '', $student->nis);
+
+                if ($nisNumber >= 412 && $nisNumber <= 461) {
+                    $programId = $programs['Paket C IPS']->id;
+                } elseif ($nisNumber >= 462 && $nisNumber <= 501) {
+                    $programId = $programs['Paket C IPA']->id;
+                } else {
+                    $programId = $programs['Paket C IPS']->id;
+                }
+            }
+
+            if (!$programId) {
+                $this->command->warn("⚠️  Student {$student->nis} tidak bisa ditentukan programnya, skip.");
+                continue;
+            }
+
+            $availableGroups = $programStudyGroupMap[$programId] ?? $studyGroupIds;
+            $studyGroupId = $availableGroups[array_rand($availableGroups)];
+
+            $rand = rand(1, 100);
+            if ($rand <= 80) {
+                $status = 'Aktif';
+            } elseif ($rand <= 95) {
+                $status = 'Alumni';
+            } else {
+                $status = 'Tidak Selesai';
+            }
+
+            $graduationYear = null;
+            if ($status === 'Alumni') {
+                $graduationYear = rand(2020, 2023);
+            } elseif ($status === 'Aktif') {
+                if (rand(1, 100) <= 70) {
+                    $graduationYear = rand(2024, 2026);
+                }
+            }
+
+            $enrollments[] = [
+                'student_id' => $student->id,
+                'academic_year_id' => $academicYearId,
+                'program_id' => $programId,
+                'study_group_id' => $studyGroupId,
+                'graduation_year' => $graduationYear,
+                'status' => $status,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        try {
+            $chunks = array_chunk($enrollments, 50);
+            foreach ($chunks as $chunk) {
+                DB::table('enrollments')->insert($chunk);
+            }
+
             $this->command->info('✅ Enrollments seeded successfully!');
             $this->command->info('📊 Total enrollments: ' . count($enrollments));
-            
+
             $activeCount = collect($enrollments)->where('status', 'Aktif')->count();
             $alumniCount = collect($enrollments)->where('status', 'Alumni')->count();
             $notFinishedCount = collect($enrollments)->where('status', 'Tidak Selesai')->count();
-            
+
+            $paketACount = collect($enrollments)->where('program_id', $programs['Paket A']->id)->count();
+            $paketBCount = collect($enrollments)->where('program_id', $programs['Paket B']->id)->count();
+            $paketCIPACount = collect($enrollments)->where('program_id', $programs['Paket C IPA']->id)->count();
+            $paketCIPSCount = collect($enrollments)->where('program_id', $programs['Paket C IPS']->id)->count();
+
+            $this->command->info('');
+            $this->command->info('📈 Status Distribution:');
             $this->command->info("   - Aktif: {$activeCount}");
             $this->command->info("   - Alumni: {$alumniCount}");
             $this->command->info("   - Tidak Selesai: {$notFinishedCount}");
-            
+
+            $this->command->info('');
+            $this->command->info('📚 Program Distribution:');
+            $this->command->info("   - Paket A: {$paketACount}");
+            $this->command->info("   - Paket B: {$paketBCount}");
+            $this->command->info("   - Paket C IPA: {$paketCIPACount}");
+            $this->command->info("   - Paket C IPS: {$paketCIPSCount}");
+
         } catch (\Exception $e) {
             $this->command->error('❌ Error saat seeding enrollments: ' . $e->getMessage());
+            $this->command->error($e->getTraceAsString());
         }
     }
 }
