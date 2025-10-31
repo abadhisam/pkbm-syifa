@@ -5,18 +5,18 @@
         </x-slot>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
-            @foreach($programs as $program)
+            @foreach($programs as $index => $program)
                 @php
                     $colors = [
-                        1 => ['bg' => '#EFF6FF', 'badge' => '#DBEAFE', 'text' => '#1E40AF', 'icon' => '#2563EB', 'accent' => '#3B82F6'],
-                        2 => ['bg' => '#F0FDF4', 'badge' => '#DCFCE7', 'text' => '#15803D', 'icon' => '#16A34A', 'accent' => '#22C55E'],
-                        3 => ['bg' => '#FAF5FF', 'badge' => '#F3E8FF', 'text' => '#6B21A8', 'icon' => '#9333EA', 'accent' => '#A855F7'],
+                        ['bg' => '#EFF6FF', 'badge' => '#DBEAFE', 'text' => '#1E40AF', 'icon' => '#2563EB', 'accent' => '#3B82F6'],
+                        ['bg' => '#F0FDF4', 'badge' => '#DCFCE7', 'text' => '#15803D', 'icon' => '#16A34A', 'accent' => '#22C55E'],
+                        ['bg' => '#FAF5FF', 'badge' => '#F3E8FF', 'text' => '#6B21A8', 'icon' => '#9333EA', 'accent' => '#A855F7'],
                     ];
-                    $color = $colors[$program['id']];
+                    $color = $colors[$index % count($colors)];
                 @endphp
 
                 <div style="position: relative; overflow: hidden; border-radius: 0.5rem; border: 1px solid #E5E7EB; background: white; padding: 1.5rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); transition: box-shadow 0.2s;">
-                    
+
                     <!-- Badge Program -->
                     <div style="position: absolute; top: 1rem; right: 1rem;">
                         <span style="display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 700; background-color: {{ $color['badge'] }}; color: {{ $color['text'] }};">
